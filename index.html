@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tre-N Mind | Flow Edition</title>
+    <meta name="description" content="進化したトリプルNバック。音楽的なサウンドとキーボード操作で、没入感のあるワーキングメモリ・トレーニングを。">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Rajdhani:wght@500;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f0f13;
+            --bg-panel: rgba(30, 30, 40, 0.7);
+            --primary: #6366f1;
+            /* Indigo */
+            --accent: #8b5cf6;
+            /* Violet */
+            --success: #10b981;
+            /* Emerald */
+            --error: #ef4444;
+            /* Red */
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --grid-border: rgba(255, 255, 255, 0.05);
+            --glow: 0 0 20px rgba(99, 102, 241, 0.3);
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            background-image: radial-gradient(circle at 50% 0%, #1e1b4b 0%, transparent 50%);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            justify-content: center;
+        }
+
+        /* Titles & Typography */
+        h1 {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 2.5rem;
+            margin: 0;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 30px rgba(129, 140, 248, 0.3);
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+        }
+
+        /* Cards & Panels */
+        .panel {
+            background: var(--bg-panel);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 24px;
+            width: 100%;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        /* Buttons */
+        .btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-main);
+            padding: 14px;
+            border-radius: 12px;
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+            border-color: var(--primary);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: #4f46e5;
+            box-shadow: 0 0 15px var(--glow);
+        }
+
+        /* Game Board */
+        #gameBoard {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            width: 100%;
+            aspect-ratio: 1;
+            margin: 20px 0;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            border: 1px solid var(--grid-border);
+        }
+
+        .cell {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stimulus {
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: opacity 0.1s, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .stimulus.active {
+            opacity: 1;
+            transform: scale(1);
+            box-shadow: 0 0 15px currentColor;
+        }
+
+        /* HUD & Info */
+        .hud {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            font-family: 'Rajdhani', sans-serif;
+            margin-bottom: 10px;
+        }
+
+        .hud-item {
+            text-align: center;
+        }
+
+        .hud-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .hud-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.3s linear;
+        }
+
+        /* Match Buttons */
+        .controls-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .control-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 15px 5px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.1s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .control-btn .key-hint {
+            font-size: 0.7rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-bottom: 4px;
+            color: var(--text-muted);
+        }
+
+        .control-btn span {
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        /* Feedback States */
+        .control-btn.correct {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: var(--success);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+            animation: bounce 0.3s;
+        }
+
+        .control-btn.wrong {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: var(--error);
+            animation: shake 0.3s;
+        }
+
+        /* Animations */
+        @keyframes bounce {
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-5px);
+            }
+
+            75% {
+                transform: translateX(5px);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .animate-enter {
+            animation: slideUp 0.4s ease forwards;
+        }
+
+        /* Ranking List */
+        .rank-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .rank-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .rank-item:first-child {
+            color: #fbbf24;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1 onclick="location.reload()" style="cursor:pointer;">Tre-N Mind</h1>
+        <div class="subtitle">Flow Edition</div>
+
+        <div id="modeScreen" class="panel animate-enter">
+            <div style="margin-bottom: 20px; text-align: left;">
+                <p style="font-size: 0.9rem; line-height: 1.5; color: #d1d5db;">
+                    音・位置・色の3つを同時に記憶する、最強のワーキングメモリ訓練。
+                    <br><span style="color:var(--primary); font-size:0.8rem;">★ PC推奨: キーボード [A] [S] [D] で操作</span>
+                </p>
+            </div>
+
+            <button class="btn" onclick="startGame(1, 3000)">
+                <span>Easy</span> <span style="font-size:0.8rem; opacity:0.6;">N=1 / Slow</span>
+            </button>
+            <button class="btn" onclick="startGame(2, 2500)">
+                <span>Normal</span> <span style="font-size:0.8rem; opacity:0.6;">N=2 / Std</span>
+            </button>
+            <button class="btn" onclick="startGame(3, 2000)">
+                <span>Hard</span> <span style="font-size:0.8rem; opacity:0.6;">N=3 / Fast</span>
+            </button>
+            <button class="btn" style="border-color: var(--accent); color: var(--accent);" onclick="toggleSettings()">
+                Custom / Practice
+            </button>
+
+            <div id="customSettings" class="hidden"
+                style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                <div style="display:flex; gap:10px; margin-bottom:10px;">
+                    <div style="flex:1;">
+                        <label style="font-size:0.7rem; color:var(--text-muted);">N-Back</label>
+                        <input type="number" id="inpN" value="2" min="1" max="5"
+                            style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; color:white; padding:8px; border-radius:6px;">
+                    </div>
+                    <div style="flex:1;">
+                        <label style="font-size:0.7rem; color:var(--text-muted);">Speed (sec)</label>
+                        <input type="number" id="inpSpeed" value="2.5" step="0.5" min="1.0"
+                            style="width:100%; background:rgba(0,0,0,0.3); border:1px solid #444; color:white; padding:8px; border-radius:6px;">
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="startCustom()">Start Custom</button>
+            </div>
+        </div>
+
+        <div id="gameScreen" class="panel hidden">
+            <div class="hud">
+                <div class="hud-item">
+                    <div class="hud-label">N-BACK</div>
+                    <div class="hud-value" style="color:var(--primary);" id="displayN">2</div>
+                </div>
+                <div class="hud-item">
+                    <div class="hud-label">STREAK</div>
+                    <div class="hud-value" style="color:var(--accent);" id="displayStreak">0</div>
+                </div>
+                <div class="hud-item">
+                    <div class="hud-label">SCORE</div>
+                    <div class="hud-value" id="displayScore">0</div>
+                </div>
+            </div>
+
+            <div class="progress-container">
+                <div id="progressBar" class="progress-bar"></div>
+            </div>
+
+            <div id="gameBoard">
+            </div>
+
+            <div class="controls-area">
+                <button id="btnPos" class="control-btn" onclick="userTrigger('position')">
+                    <div class="key-hint">A</div>
+                    <span>位置</span>
+                </button>
+                <button id="btnAud" class="control-btn" onclick="userTrigger('audio')">
+                    <div class="key-hint">S</div>
+                    <span>音</span>
+                </button>
+                <button id="btnCol" class="control-btn" onclick="userTrigger('color')">
+                    <div class="key-hint">D</div>
+                    <span>色</span>
+                </button>
+            </div>
+            <div id="feedbackText"
+                style="height:20px; text-align:center; margin-top:10px; font-size:0.8rem; font-weight:bold; color:var(--text-muted);">
+            </div>
+        </div>
+
+        <div id="resultScreen" class="panel hidden">
+            <h2 style="text-align:center; margin-top:0;">SESSION COMPLETE</h2>
+            <div style="text-align:center; margin-bottom:20px;">
+                <div style="font-size:3rem; font-family:'Rajdhani'; font-weight:700;" id="finalScore">0</div>
+                <div style="color:var(--text-muted);">Total Points</div>
+            </div>
+
+            <div style="background:rgba(0,0,0,0.2); border-radius:12px; padding:15px; margin-bottom:20px;">
+                <h4 style="margin:0 0 10px 0; color:var(--text-muted); font-size:0.8rem; text-transform:uppercase;">
+                    Local Ranking</h4>
+                <ul id="rankingList" class="rank-list"></ul>
+            </div>
+
+            <button class="btn btn-primary" onclick="location.reload()">Back to Menu</button>
+        </div>
+    </div>
+
+    <script>
+        // --- Configuration & State ---
+        const CONFIG = {
+            gridSize: 9,
+            // Neon Palette for Colors
+            colors: ['#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4', '#eab308', '#f43f5e'],
+            // Pentatonic Scale (C Minor) for more musical randomness
+            notes: [261.63, 311.13, 349.23, 392.00, 466.16, 523.25, 622.25, 698.46, 783.99],
+            maxTrialsBase: 20
+        };
+
+        let state = {
+            n: 2,
+            speed: 2500,
+            trialsTotal: 0,
+            currentTrial: 0,
+            score: 0,
+            streak: 0,
+            history: { pos: [], aud: [], col: [] },
+            active: false,
+            waitingForInput: false,
+            guesses: { pos: false, aud: false, col: false },
+            matches: { pos: false, aud: false, col: false }
+        };
+
+        let audioCtx;
+        let gameTimer;
+
+        // --- Init & UI Logic ---
+        function initGrid() {
+            const board = document.getElementById('gameBoard');
+            board.innerHTML = '';
+            for (let i = 0; i < CONFIG.gridSize; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                const stim = document.createElement('div');
+                stim.className = 'stimulus';
+                stim.id = `stim-${i}`;
+                cell.appendChild(stim);
+                board.appendChild(cell);
+            }
+        }
+
+        function toggleSettings() {
+            document.getElementById('customSettings').classList.toggle('hidden');
+        }
+
+        function startGame(n, speed) {
+            // Audio Context must start on user interaction
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            state.n = n;
+            state.speed = speed;
+            state.trialsTotal = 20 + (n * 2); // Slightly longer for higher N
+            state.currentTrial = 0;
+            state.score = 0;
+            state.streak = 0;
+            state.history = { pos: [], aud: [], col: [] };
+            state.active = true;
+
+            // Update UI
+            document.getElementById('displayN').textContent = n;
+            document.getElementById('displayScore').textContent = '0';
+            document.getElementById('displayStreak').textContent = '0';
+            document.getElementById('progressBar').style.width = '0%';
+
+            document.getElementById('modeScreen').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            document.getElementById('gameScreen').classList.add('animate-enter');
+
+            initGrid();
+
+            // Buffer time before first trial
+            setTimeout(nextTrial, 1000);
+        }
+
+        function startCustom() {
+            const n = parseInt(document.getElementById('inpN').value);
+            const s = parseFloat(document.getElementById('inpSpeed').value) * 1000;
+            startGame(n, s);
+        }
+
+        // --- Core Game Loop ---
+        function nextTrial() {
+            if (!state.active) return;
+
+            // 1. Check previous trial results (if missed)
+            // (Simplified logic: we only reward hits in this version for positive reinforcement flow)
+
+            // 2. End condition
+            if (state.currentTrial >= state.trialsTotal) {
+                endGame();
+                return;
+            }
+
+            state.currentTrial++;
+            updateProgress();
+
+            // 3. Reset UI from previous
+            document.querySelectorAll('.stimulus').forEach(el => el.className = 'stimulus');
+            document.querySelectorAll('.control-btn').forEach(el => el.classList.remove('correct', 'wrong'));
+            document.getElementById('feedbackText').textContent = '';
+            state.guesses = { pos: false, aud: false, col: false };
+
+            // 4. Generate stimuli
+            const p = Math.floor(Math.random() * CONFIG.gridSize);
+            const a = Math.floor(Math.random() * CONFIG.notes.length);
+            const c = Math.floor(Math.random() * CONFIG.colors.length);
+
+            // 5. Determine matches
+            state.matches = { pos: false, aud: false, col: false };
+            const idx = state.currentTrial - 1 - state.n; // 0-based index history check
+            if (idx >= 0) {
+                if (state.history.pos[idx] === p) state.matches.pos = true;
+                if (state.history.aud[idx] === a) state.matches.aud = true;
+                if (state.history.col[idx] === c) state.matches.col = true;
+            }
+
+            // 6. Record history
+            state.history.pos.push(p);
+            state.history.aud.push(a);
+            state.history.col.push(c);
+
+            // 7. Execute presentation
+            playNote(CONFIG.notes[a]);
+            const stimEl = document.getElementById(`stim-${p}`);
+            stimEl.style.backgroundColor = CONFIG.colors[c];
+            stimEl.style.color = CONFIG.colors[c]; // For shadow
+            stimEl.classList.add('active');
+
+            // 8. Schedule next
+            gameTimer = setTimeout(nextTrial, state.speed);
+        }
+
+        // --- Interaction Logic ---
+        function userTrigger(type) {
+            if (!state.active) return;
+            const key = type === 'position' ? 'pos' : (type === 'audio' ? 'aud' : 'col');
+
+            if (state.guesses[key]) return; // Prevent double press
+            state.guesses[key] = true;
+
+            const btn = document.getElementById(type === 'position' ? 'btnPos' : (type === 'audio' ? 'btnAud' : 'btnCol'));
+            const isMatch = state.matches[key];
+
+            if (isMatch) {
+                // Correct
+                state.score += 10 + (state.streak * 2);
+                state.streak++;
+                btn.classList.add('correct');
+                document.getElementById('feedbackText').textContent = "PERFECT MATCH";
+                document.getElementById('feedbackText').style.color = "var(--success)";
+                playSoundEffect('success');
+            } else {
+                // Wrong
+                state.streak = 0;
+                btn.classList.add('wrong');
+                document.getElementById('feedbackText').textContent = "MISS";
+                document.getElementById('feedbackText').style.color = "var(--error)";
+                playSoundEffect('error');
+            }
+
+            // UI Updates
+            document.getElementById('displayScore').textContent = state.score;
+            document.getElementById('displayStreak').textContent = state.streak;
+        }
+
+        // Keyboard bindings
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'KeyA' || e.code === 'ArrowLeft') userTrigger('position');
+            if (e.code === 'KeyS' || e.code === 'ArrowDown') userTrigger('audio');
+            if (e.code === 'KeyD' || e.code === 'ArrowRight') userTrigger('color');
+        });
+
+        // --- Audio Engine ---
+        function playNote(freq) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.type = 'triangle'; // Softer than sine
+            osc.frequency.value = freq;
+
+            // Envelope for musicality
+            gain.gain.setValueAtTime(0, audioCtx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.3, audioCtx.currentTime + 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.6);
+        }
+
+        function playSoundEffect(type) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (type === 'success') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.2);
+            } else {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.2);
+            }
+        }
+
+        // --- Helper ---
+        function updateProgress() {
+            const pct = (state.currentTrial / state.trialsTotal) * 100;
+            document.getElementById('progressBar').style.width = `${pct}%`;
+        }
+
+        function endGame() {
+            state.active = false;
+            document.getElementById('gameScreen').classList.add('hidden');
+            document.getElementById('resultScreen').classList.remove('hidden');
+            document.getElementById('resultScreen').classList.add('animate-enter');
+            document.getElementById('finalScore').textContent = state.score;
+
+            saveRanking(state.score, state.n);
+        }
+
+        // --- Local Storage Ranking ---
+        function saveRanking(score, n) {
+            let rankings = JSON.parse(localStorage.getItem('treNFlowRank')) || [];
+            const date = new Date().toLocaleDateString();
+            rankings.push({ score, n, date });
+            rankings.sort((a, b) => b.score - a.score);
+            rankings = rankings.slice(0, 5); // Keep top 5
+            localStorage.setItem('treNFlowRank', JSON.stringify(rankings));
+            renderRanking(rankings);
+        }
+
+        function renderRanking(rankings) {
+            if (!rankings) rankings = JSON.parse(localStorage.getItem('treNFlowRank')) || [];
+            const list = document.getElementById('rankingList');
+            list.innerHTML = '';
+            rankings.forEach((r, i) => {
+                const li = document.createElement('li');
+                li.className = 'rank-item';
+                li.innerHTML = `<span>#${i + 1} Score: ${r.score} (N=${r.n})</span> <span style="font-size:0.8rem; opacity:0.7">${r.date}</span>`;
+                list.appendChild(li);
+            });
+        }
+    </script>
+</body>
+
+</html>
